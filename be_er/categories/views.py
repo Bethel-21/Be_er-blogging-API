@@ -1,7 +1,10 @@
-from django.http import HttpResponse
+# categories/views.py
+from rest_framework import viewsets
+from .models import Category
+from .serializers import CategorySerializer
+from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly
 
-def category_list(request):
-    return HttpResponse("This is the category list page.")
-
-def category_detail(request, id):
-    return HttpResponse(f"This is the detail page for category {id}.")
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
