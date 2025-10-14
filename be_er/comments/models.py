@@ -1,17 +1,14 @@
+# comments/models.py
 from django.db import models
-from django.contrib.auth.models import User
+from core.models import TimeStampedModel
+from django.conf import settings
 from posts.models import Post
 
-# Create your models here.
-
-class Comment(models.Model):
+class Comment(TimeStampedModel):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='comments')
     content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    is_flagged = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'Comment by {self.user.username} on {self.post.title}'
-
-        
+        return f"Comment by {self.author} on {self.post}"
