@@ -1,18 +1,18 @@
-# comments/serializers.py
 from rest_framework import serializers
 from .models import Comment
-from users.serializers import UserSerializer
+from posts.models import Post
+from users.models import User
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
-    post = serializers.PrimaryKeyRelatedField(queryset=None)
+    post = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
+    author = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Comment
-        fields = ('id','post','author','content','created_at','updated_at','is_flagged')
-        read_only_fields = ('author','created_at','updated_at','is_flagged')
+        fields = ['id', 'post', 'author', 'content', 'created_at', 'is_flagged']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        from posts.models import Post
-        self.fields['post'].queryset = Post.objects.all()
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['author'] = request.user
+        return super().create(validated_data)

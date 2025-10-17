@@ -1,20 +1,20 @@
-# posts/serializers.py
 from rest_framework import serializers
 from .models import Post
-from users.serializers import UserSerializer
-from categories.serializers import CategorySerializer
+from categories.models import Category
+from users.models import User
 
 class PostSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
-    category = serializers.PrimaryKeyRelatedField(queryset=None)  # will set in __init__
+    # PrimaryKeyRelatedField needs a queryset at declaration
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    author = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Post
-        fields = ('id','title','content','author','category','created_at','updated_at','is_flagged','is_published')
-        read_only_fields = ('created_at','updated_at','is_flagged')
+        fields = ['id', 'title', 'content', 'author', 'category', 'created_at', 'updated_at', 'is_flagged']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # set queryset now to avoid circular import at module load
-        from categories.models import Category
-        self.fields['category'].queryset = Category.objects.all()
+    def create(self, validated_data):
+        # Set the author from the request
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['author'] = request.user
+        return super().create(validated_data)
